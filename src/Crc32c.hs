@@ -5,7 +5,9 @@ module Crc32c
   ( bytes
   , mutableBytes
   , chunks
-  , mutableChunks
+    -- * TODO: Get rid of primitive-slice dep
+  , byteArrays
+  , mutableByteArrays
   ) where
 
 import Crc32c.Table (table)
@@ -16,6 +18,7 @@ import Control.Monad.Primitive (PrimState,PrimMonad)
 import Data.Bits (shiftR,xor)
 import Data.Primitive.Slice (UnliftedVector(UnliftedVector))
 import Data.Primitive.Slice (MutableUnliftedVector(MutableUnliftedVector))
+import Data.Bytes.Chunks (Chunks(ChunksCons,ChunksNil))
 import qualified Data.Primitive.Unlifted.Array as PM
 import qualified Data.Primitive.ByteArray as PM
 import qualified Data.Primitive.Ptr as PM
@@ -27,6 +30,12 @@ bytes !acc0 (Bytes arr off len) =
         then go (step acc (PM.indexByteArray arr ix)) (ix + 1) end
         else acc
    in xor 0xFFFFFFFF (go (xor acc0 0xFFFFFFFF) off (off + len))
+
+chunks :: Word32 -> Chunks -> Word32
+chunks !acc ChunksNil = acc
+chunks !acc (ChunksCons x xs) =
+  let !acc' = bytes acc x
+   in chunks acc' xs
 
 -- | Compute the checksum of a slice of mutable bytes.
 mutableBytes :: PrimMonad m
@@ -44,8 +53,8 @@ mutableBytes acc0 (MutableBytes arr off len) = do
   pure (xor 0xFFFFFFFF r)
 
 -- | Compute the checksum of a slice into an array of unsliced byte arrays.
-chunks :: Word32 -> UnliftedVector ByteArray -> Word32
-chunks acc0 (UnliftedVector arr off len) = 
+byteArrays :: Word32 -> UnliftedVector ByteArray -> Word32
+byteArrays !acc0 (UnliftedVector arr off len) =
   let go !acc !ix !end = if ix < end
         then
           let b = PM.indexUnliftedArray arr ix
@@ -55,12 +64,12 @@ chunks acc0 (UnliftedVector arr off len) =
 
 -- | Compute the checksum of a slice into an mutable array of
 -- unsliced byte arrays.
-mutableChunks :: PrimMonad m
+mutableByteArrays :: PrimMonad m
   => Word32
   -> MutableUnliftedVector (PrimState m) ByteArray
   -> m Word32
-{-# inlineable mutableChunks #-}
-mutableChunks acc0 (MutableUnliftedVector arr off len) = 
+{-# inlineable mutableByteArrays #-}
+mutableByteArrays acc0 (MutableUnliftedVector arr off len) =
   let go !acc !ix !end = if ix < end
         then do
           b <- PM.readUnliftedArray arr ix

@@ -1,4 +1,4 @@
-import Crc32c (bytes,chunks)
+import Crc32c (bytes,byteArrays)
 import Control.Monad (when)
 import Data.Primitive (ByteArray)
 import Data.Word (Word8)
@@ -18,7 +18,7 @@ main = do
         , (Exts.fromList [0x34 :: Word8,0x35,0x36,0x37,0x38,0x39])
         ]
   let expected2 = 0xe3069283
-  let actual2 = chunks 0 sample2
+  let actual2 = byteArrays 0 sample2
   when (actual2 /= expected2) $ fail $
     "ex2: expected " ++ show expected2 ++ " but got " ++ show actual2
   
