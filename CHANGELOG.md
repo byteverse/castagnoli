@@ -1,5 +1,10 @@
 # Revision history for castagnoli
 
+## 0.2.0.1 -- 2023-08-22
+
+* Allow newer primitive
+* Remove dep on primitive-unlifted
+
 ## 0.2.0.0 -- 2023-05-01
 
 * Remove dependency on primitive-slice.

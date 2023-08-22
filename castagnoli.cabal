@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name: castagnoli
-version: 0.2.0.0
+version: 0.2.0.1
 synopsis: Portable CRC-32C
 description: Portable implementation of CRC-32C.
 homepage: https://github.com/andrewthad/castagnoli
