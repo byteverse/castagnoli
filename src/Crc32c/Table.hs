@@ -1,12 +1,12 @@
-{-# language CPP #-}
-{-# language MagicHash #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE MagicHash #-}
 
 module Crc32c.Table
   ( table
   ) where
 
 import Data.Word (Word32)
-import GHC.Ptr (Ptr(Ptr))
+import GHC.Ptr (Ptr (Ptr))
 
 #include "MachDeps.h"
 

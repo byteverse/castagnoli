@@ -1,5 +1,9 @@
 # Revision history for castagnoli
 
+## 0.2.0.2 -- 2024-02-01
+
+* Update package metadata.
+
 ## 0.2.0.1 -- 2023-08-22
 
 * Allow newer primitive

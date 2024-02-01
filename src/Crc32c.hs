@@ -1,5 +1,5 @@
-{-# language BangPatterns #-}
-{-# language TypeApplications #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Crc32c
   ( bytes
@@ -7,21 +7,22 @@ module Crc32c
   , chunks
   ) where
 
+import Control.Monad.Primitive (PrimMonad, PrimState)
 import Crc32c.Table (table)
-import Data.Word (Word8,Word32)
-import Data.Bytes.Types (Bytes(Bytes),MutableBytes(MutableBytes))
-import Control.Monad.Primitive (PrimState,PrimMonad)
-import Data.Bits (shiftR,xor)
-import Data.Bytes.Chunks (Chunks(ChunksCons,ChunksNil))
+import Data.Bits (shiftR, xor)
+import Data.Bytes.Chunks (Chunks (ChunksCons, ChunksNil))
+import Data.Bytes.Types (Bytes (Bytes), MutableBytes (MutableBytes))
 import qualified Data.Primitive.ByteArray as PM
 import qualified Data.Primitive.Ptr as PM
+import Data.Word (Word32, Word8)
 
 -- | Compute the checksum of a slice of bytes.
 bytes :: Word32 -> Bytes -> Word32
 bytes !acc0 (Bytes arr off len) =
-  let go !acc !ix !end = if ix < end
-        then go (step acc (PM.indexByteArray arr ix)) (ix + 1) end
-        else acc
+  let go !acc !ix !end =
+        if ix < end
+          then go (step acc (PM.indexByteArray arr ix)) (ix + 1) end
+          else acc
    in xor 0xFFFFFFFF (go (xor acc0 0xFFFFFFFF) off (off + len))
 
 chunks :: Word32 -> Chunks -> Word32
@@ -31,17 +32,19 @@ chunks !acc (ChunksCons x xs) =
    in chunks acc' xs
 
 -- | Compute the checksum of a slice of mutable bytes.
-mutableBytes :: PrimMonad m
-  => Word32
-  -> MutableBytes (PrimState m)
-  -> m Word32
-{-# inlineable mutableBytes #-}
+mutableBytes ::
+  (PrimMonad m) =>
+  Word32 ->
+  MutableBytes (PrimState m) ->
+  m Word32
+{-# INLINEABLE mutableBytes #-}
 mutableBytes acc0 (MutableBytes arr off len) = do
-  let go !acc !ix !end = if ix < end
-        then do
-          w <- PM.readByteArray arr ix
-          go (step acc w) (ix + 1) end
-        else pure acc
+  let go !acc !ix !end =
+        if ix < end
+          then do
+            w <- PM.readByteArray arr ix
+            go (step acc w) (ix + 1) end
+          else pure acc
   r <- go (xor acc0 0xFFFFFFFF) off (off + len)
   pure (xor 0xFFFFFFFF r)
 
@@ -56,7 +59,7 @@ mutableBytes acc0 (MutableBytes arr off len) = do
 -- x            in go (bytes acc (Bytes b 0 (PM.sizeofByteArray b))) (ix + 1) end
 -- x         else acc
 -- x    in go acc0 off (off + len)
--- x 
+-- x
 -- x -- | Compute the checksum of a slice into an mutable array of
 -- x -- unsliced byte arrays.
 -- x mutableByteArrays :: PrimMonad m
@@ -73,9 +76,10 @@ mutableBytes acc0 (MutableBytes arr off len) = do
 -- x    in go acc0 off (off + len)
 
 step :: Word32 -> Word8 -> Word32
-step !acc !w = xor
-  (scramble (xor (fromIntegral @Word32 @Word8 acc) w))
-  (shiftR acc 8)
+step !acc !w =
+  xor
+    (scramble (xor (fromIntegral @Word32 @Word8 acc) w))
+    (shiftR acc 8)
 
 scramble :: Word8 -> Word32
 scramble w = PM.indexOffPtr table (fromIntegral @Word8 @Int w)
